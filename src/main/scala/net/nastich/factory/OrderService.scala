@@ -1,26 +1,30 @@
 package net.nastich.factory
 
 import akka.actor._
+import akka.event.LoggingAdapter
 import akka.pattern.ask
 import akka.util.Timeout
 import net.nastich.factory.actor.Manufacturer
 import net.nastich.factory.actor.Manufacturer.{Item, OrderComplete}
 import spray.http.MediaTypes._
+import spray.http.StatusCodes
+import spray.httpx.SprayJsonSupport._
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 import spray.routing._
 
 import scala.concurrent.duration._
 
-trait OrderService extends HttpService { this: ActorLogging =>
+trait OrderService extends HttpService {
 
-  def actorRefFactory: ActorContext
+  def log: LoggingAdapter
 
   val factoryProps: Props
-//  val manufacturer: ActorRef = actorRefFactory.actorOf(factoryProps, "furniture-factory")
-  lazy val manufacturer: ActorRef = actorRefFactory.actorOf(Manufacturer.props, "furniture-factory")
 
-  implicit val executionContext = actorRefFactory.dispatcher
+  lazy val manufacturer: ActorRef = actorRefFactory.actorOf(factoryProps, "furniture-factory")
+
+  implicit lazy val executionContext = actorRefFactory.dispatcher
+
   implicit val timeout = Timeout(5.seconds)
 
   implicit val itemFormat = new JsonFormat[Item] {
@@ -49,17 +53,17 @@ trait OrderService extends HttpService { this: ActorLogging =>
     } ~
     (path("order") & parameter('item)) { (itemName: String) =>
       get {
-        complete {
+        respondWithMediaType(`application/json`) {
           import net.nastich.factory.actor.Manufacturer._
-          import spray.httpx.SprayJsonSupport._
-          log.info(s"Received request. itemName = $itemName")
           itemName match {
-            case Item(actualItem) =>
-              log.info(s"Asking manufacturer $manufacturer to produce $actualItem")
-              val future = (manufacturer ? Shop(actualItem)).mapTo[OrderComplete]//.map(msg => msg.toJson)
-              future.onComplete(res => log.info(s"Result: $res"))
+            case Item(actualItem) => complete {
+              log.debug(s"Ordering manufacturer to produce $actualItem")
+              val future = (manufacturer ? Shop(actualItem)).mapTo[OrderComplete]
               future
-            case unknown => s"Cannot handle item type: $unknown"
+            }
+            case unknown => complete {
+              StatusCodes.PreconditionFailed -> Map("message" -> s"Cannot handle item type: $unknown")
+            }
           }
         }
       }

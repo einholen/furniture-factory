@@ -13,7 +13,8 @@ import scala.concurrent.duration._
 object Boot extends App {
   implicit val system = ActorSystem("furniture-factory")
   implicit val timeout = Timeout(5.seconds)
-  val service = system.actorOf(OrderServiceActor.props(Manufacturer.props), "order-service")
+  val settings = new Settings(system.settings.config)
+  val service = system.actorOf(OrderServiceActor.props(Manufacturer.props(settings)), "order-service")
 
   val log = system.log
   IO(Http) ? Http.Bind(service, interface = "localhost", port = 8080)
