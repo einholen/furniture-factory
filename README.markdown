@@ -1,49 +1,30 @@
-## _spray_ Template Project
+## Мебельная фабрика
 
-This projects provides a starting point for your own _spray-routing_ endeavors.
-There are 8 branches, providing templates for _spray-routing_ on
+Инструкция по запуску:
 
-* _spray-can_, Scala 2.9 + Akka 2.0 + spray 1.0 (the `on_spray-can_1.0` branch)
-* _spray-can_, Scala 2.10 + Akka 2.1 + spray 1.1 (the `on_spray-can_1.1` branch)
-* _spray-can_, Scala 2.10 + Akka 2.2 + spray 1.2 (the `on_spray-can_1.2` branch)
-* _spray-can_, Scala 2.10 + Akka 2.3 + spray 1.3 (the `on_spray-can_1.3` branch)
-* _spray-can_, Scala 2.11 + Akka 2.3 + spray 1.3 (the `on_spray-can_1.3_scala-2.11` branch)
-* _Jetty_, Scala 2.9 + Akka 2.0 + spray 1.0 (the `on_jetty_1.0` branch)
-* _Jetty_, Scala 2.10 + Akka 2.1 + spray 1.1 (the `on_jetty_1.1` branch)
-* _Jetty_, Scala 2.10 + Akka 2.2 + spray 1.2 (the `on_jetty_1.2` branch)
-* _Jetty_, Scala 2.10 + Akka 2.3 + spray 1.3 (the `on_jetty_1.3` branch)
-* _Jetty_, Scala 2.11 + Akka 2.3 + spray 1.3 (the `on_jetty_1.3_scala-2.11` branch)
+1. Склонировать репозиторий:
 
-You are currently on the `on_spray-can_1.3_scala-2.11` branch.
+        $ git clone git://github.com/nastich/furniture-factory.git furniture-factory
 
-Follow these steps to get started:
+2. Перейти в склонированный репозиторий:
 
-1. Git-clone this repository.
+        $ cd furniture-factory
 
-        $ git clone git://github.com/spray/spray-template.git my-project
-
-2. Change directory into your clone:
-
-        $ cd my-project
-
-3. Launch SBT:
+3. Запустить SBT:
 
         $ sbt
 
-4. Compile everything and run all tests:
+4. Скомпилировать код и прогнать тесты:
 
         > test
 
-5. Start the application:
+5. Запустить сервер:
 
         > re-start
 
-6. Browse to [http://localhost:8080](http://localhost:8080/)
+6. В браузере перейти по ссылке [заказа стула](http://localhost:8080/order?item=chair) или
+   [заказа стола](http://localhost:8080/order?item=table)
 
-7. Stop the application:
+7. Остановить приложение:
 
         > re-stop
-
-8. Learn more at http://www.spray.io/
-
-9. Start hacking on `src/main/scala/com/example/MyService.scala`
