@@ -1,6 +1,6 @@
 package net.nastich.factory.actor
 
-import akka.actor.{Props, Actor, ActorLogging, Stash}
+import akka.actor.{Actor, ActorLogging, Props, Stash}
 import net.nastich.factory.actor.Manufacturer._
 
 import scala.concurrent.duration._
@@ -14,16 +14,15 @@ import scala.concurrent.duration._
  */
 class Assembly(price: BigDecimal, time: FiniteDuration) extends Actor with Stash with ActorLogging {
 
-  import Assembly._
   import context.dispatcher
+  import net.nastich.factory.actor.Assembly._
 
   def receive = standby
 
   val standby: Receive = {
     case Package(orderNo, product, parts) =>
-      val partTypes = parts.map(_.getClass)
-      val blueprint: Seq[Class[_ <: Part]] = partBlueprints.getOrElse(product, Seq.empty)
-      val completePackage = parts.nonEmpty && (blueprint sameElements partTypes)
+      val isComplete = PackageValidators.getOrElse(product, (_: Seq[Part]) => false)
+      val completePackage = parts.nonEmpty && isComplete(parts)
       if (completePackage) {
         val manufacturer = sender()
         context become busy
@@ -53,21 +52,30 @@ object Assembly {
   case class ImproperPackage(orderNo: Long)
   case class Assembled(orderNo: Long, price: BigDecimal, product: Manufacturer.Item)
   private[Assembly] case object WorkDone
+  
+  def sortSeqOfClasses[T](seq: Seq[Class[_ <: T]]): Seq[Class[_ <: T]] =
+    seq.sortWith((c1, c2) => c1.getSimpleName.compareTo(c2.getSimpleName) < 0)
 
-  val tableParts: Seq[Class[_ <: Part]] = Seq(
+  private val tableParts: Seq[Class[_ <: Part]] = sortSeqOfClasses[Part](Seq(
     classOf[TableLeg],
     classOf[TableLeg],
     classOf[TableLeg],
     classOf[TableLeg],
-    classOf[TableTop])
+    classOf[TableTop]))
 
-  val chairParts: Seq[Class[_ <: Part]] = Seq(classOf[ChairLeg],
+  private val chairParts: Seq[Class[_ <: Part]] = sortSeqOfClasses[Part](Seq(
+    classOf[ChairLeg],
     classOf[ChairLeg],
     classOf[ChairLeg],
     classOf[ChairLeg],
     classOf[ChairSeat],
-    classOf[ChairBack])
+    classOf[ChairBack]))
   
-  val partBlueprints: Map[Item, Seq[Class[_ <: Part]]] = Map(Chair -> chairParts, Table -> tableParts)
+  val PackageValidators: Map[Item, Seq[Part] => Boolean] = Map(
+    Chair -> validatePartsAgainst(chairParts),
+    Table -> validatePartsAgainst(tableParts))
+  
+  private def validatePartsAgainst(partTypes: Seq[Class[_ <: Part]]): (Seq[Part] => Boolean) =
+    parts => sortSeqOfClasses[Part](parts.map(_.getClass)).sameElements(partTypes)
 
 }
