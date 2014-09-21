@@ -11,7 +11,7 @@ import scala.concurrent.duration._
  * @author sena0713
  * @since 20.09.2014 
  */
-class Settings(config: Config) {
+case class Settings(config: Config) {
 
   import config._
 
