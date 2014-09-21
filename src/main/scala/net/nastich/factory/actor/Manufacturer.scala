@@ -1,5 +1,7 @@
 package net.nastich.factory.actor
 
+import java.util.UUID
+
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.event.LoggingReceive
 import akka.routing.RoundRobinPool
@@ -22,8 +24,8 @@ class Manufacturer(settings: Settings) extends Actor with ActorLogging with HasS
   import net.nastich.factory.actor.Master._
   import settings._
 
-  val assembly: ActorRef = context.actorOf(Props.empty//Assembly.props(AssemblyPrice, AssemblyDuration)
-    .withRouter(RoundRobinPool(AssemblyCapacity)))
+  val assembly: ActorRef = context.actorOf(
+    Assembly.props(AssemblyPrice, AssemblyDuration).withRouter(RoundRobinPool(AssemblyCapacity)), "assembly")
 
   var freeLegWorkers: List[ActorRef] = List.empty
   var freeChairTopWorkers: List[ActorRef] = List.empty
@@ -49,7 +51,7 @@ class Manufacturer(settings: Settings) extends Actor with ActorLogging with HasS
   }
 
   val acceptParts: Receive = {
-    case PartComplete(orderNo, part) =>
+    case PartComplete(orderNo, price, part) =>
       val alreadyCollectedParts = partsForOrders.getOrElse(orderNo, Seq.empty[Part])
       partsForOrders += orderNo -> (part +: alreadyCollectedParts)
   }
@@ -87,13 +89,16 @@ object Manufacturer {
   }
 
   sealed trait Part {
-    val id: Long
+    val id: String
   }
-  case class TableLeg(id: Long) extends Part
-  case class TableTop(id: Long) extends Part
-  case class ChairLeg(id: Long) extends Part
-  case class ChairSeat(id: Long) extends Part
-  case class ChairBack(id: Long) extends Part
+  object Part {
+    type PartType = Class[_ <: Part]
+  }
+  case class TableLeg(id: String = UUID.randomUUID().toString) extends Part
+  case class TableTop(id: String = UUID.randomUUID().toString) extends Part
+  case class ChairLeg(id: String = UUID.randomUUID().toString) extends Part
+  case class ChairSeat(id: String = UUID.randomUUID().toString) extends Part
+  case class ChairBack(id: String = UUID.randomUUID().toString) extends Part
 
   /**
    * This message is expected to be replied with to Shopping orders ([[net.nastich.factory.actor.Manufacturer.Shop]])

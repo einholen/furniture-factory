@@ -1,21 +1,22 @@
 package net.nastich.factory.actor
 
 import akka.actor.{Actor, ActorLogging, Props, Stash}
+import net.nastich.factory.actor.Manufacturer.Part.PartType
 import net.nastich.factory.actor.Manufacturer._
 
 import scala.concurrent.duration._
 
 /**
  * This actor represents the Assembly service of the factory. It accepts packages of parts and produces
- * a product from them.
+ * a product from them. While a product is being assembled, all consecutive orders are stashed and should wait
+ * until it transitions to standby.
  *
  * @author sena0713
  * @since 20.09.2014 
  */
 class Assembly(price: BigDecimal, time: FiniteDuration) extends Actor with Stash with ActorLogging {
-
   import context.dispatcher
-  import net.nastich.factory.actor.Assembly._
+  import Assembly._
 
   def receive = standby
 
@@ -41,7 +42,6 @@ class Assembly(price: BigDecimal, time: FiniteDuration) extends Actor with Stash
       context become standby
       unstashAll()
   }
-
 }
 
 object Assembly {
@@ -56,14 +56,14 @@ object Assembly {
   def sortSeqOfClasses[T](seq: Seq[Class[_ <: T]]): Seq[Class[_ <: T]] =
     seq.sortWith((c1, c2) => c1.getSimpleName.compareTo(c2.getSimpleName) < 0)
 
-  private val tableParts: Seq[Class[_ <: Part]] = sortSeqOfClasses[Part](Seq(
+  private val tableParts: Seq[PartType] = sortSeqOfClasses[Part](Seq(
     classOf[TableLeg],
     classOf[TableLeg],
     classOf[TableLeg],
     classOf[TableLeg],
     classOf[TableTop]))
 
-  private val chairParts: Seq[Class[_ <: Part]] = sortSeqOfClasses[Part](Seq(
+  private val chairParts: Seq[PartType] = sortSeqOfClasses[Part](Seq(
     classOf[ChairLeg],
     classOf[ChairLeg],
     classOf[ChairLeg],
@@ -75,7 +75,7 @@ object Assembly {
     Chair -> validatePartsAgainst(chairParts),
     Table -> validatePartsAgainst(tableParts))
   
-  private def validatePartsAgainst(partTypes: Seq[Class[_ <: Part]]): (Seq[Part] => Boolean) =
+  private def validatePartsAgainst(partTypes: Seq[PartType]): (Seq[Part] => Boolean) =
     parts => sortSeqOfClasses[Part](parts.map(_.getClass)).sameElements(partTypes)
 
 }

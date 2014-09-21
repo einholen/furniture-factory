@@ -1,27 +1,17 @@
 package net.nastich.factory.actor
 
-import akka.actor.ActorSystem
-import akka.testkit.{ImplicitSender, TestKit}
 import net.nastich.factory.actor.Assembly._
 import net.nastich.factory.actor.Manufacturer._
-import org.scalatest.{OneInstancePerTest, Matchers, BeforeAndAfterAll, WordSpecLike}
+import net.nastich.factory.common.TestKitWordSpec
 
 import scala.concurrent.duration._
 
-class AssemblySpec
-    extends TestKit(ActorSystem("testSystem"))
-    with WordSpecLike
-    with BeforeAndAfterAll
-    with Matchers
-    with ImplicitSender
-    with OneInstancePerTest {
-
-  override protected def afterAll(): Unit = system.shutdown()
+class AssemblySpec extends TestKitWordSpec {
 
   val price = BigDecimal(10.0)
 
-  val testChairPackageComplete = Seq(ChairSeat(1), ChairBack(2), ChairLeg(3), ChairLeg(4), ChairLeg(5), ChairLeg(6))
-  val testTablePackageComplete = Seq(TableLeg(1), TableTop(2), TableLeg(3), TableLeg(4), TableLeg(5))
+  val testChairPackageComplete = Seq(ChairSeat(), ChairBack(), ChairLeg(), ChairLeg(), ChairLeg(), ChairLeg())
+  val testTablePackageComplete = Seq(TableLeg(), TableTop(), TableLeg(), TableLeg(), TableLeg())
 
   "Assembly actor" should {
 
@@ -61,13 +51,13 @@ class AssemblySpec
       assembly ! Package(2L, Table, Seq.empty)
       expectMsg(ImproperPackage(2L))
 
-      assembly ! Package(3L, Chair, Seq(ChairLeg(1), ChairLeg(2), ChairBack(3)))
+      assembly ! Package(3L, Chair, Seq(ChairLeg(), ChairLeg(), ChairBack()))
       expectMsg(ImproperPackage(3L))
 
-      assembly ! Package(4L, Table, Seq(TableLeg(1), TableTop(3)))
+      assembly ! Package(4L, Table, Seq(TableLeg(), TableTop()))
       expectMsg(ImproperPackage(4L))
 
-      assembly ! Package(5L, Table, testTablePackageComplete :+ ChairLeg(10))
+      assembly ! Package(5L, Table, testTablePackageComplete :+ ChairLeg())
       expectMsg(ImproperPackage(5L))
     }
     
