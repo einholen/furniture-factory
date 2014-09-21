@@ -56,14 +56,14 @@ object Assembly {
   def sortSeqOfClasses[T](seq: Seq[Class[_ <: T]]): Seq[Class[_ <: T]] =
     seq.sortWith((c1, c2) => c1.getSimpleName.compareTo(c2.getSimpleName) < 0)
 
-  private val tableParts: Seq[PartType] = sortSeqOfClasses[Part](Seq(
+  val TableBlueprint: Seq[PartType] = sortSeqOfClasses[Part](Seq(
     classOf[TableLeg],
     classOf[TableLeg],
     classOf[TableLeg],
     classOf[TableLeg],
     classOf[TableTop]))
 
-  private val chairParts: Seq[PartType] = sortSeqOfClasses[Part](Seq(
+  val ChairBlueprint: Seq[PartType] = sortSeqOfClasses[Part](Seq(
     classOf[ChairLeg],
     classOf[ChairLeg],
     classOf[ChairLeg],
@@ -72,8 +72,8 @@ object Assembly {
     classOf[ChairBack]))
   
   val PackageValidators: Map[Item, Seq[Part] => Boolean] = Map(
-    Chair -> validatePartsAgainst(chairParts),
-    Table -> validatePartsAgainst(tableParts))
+    Chair -> validatePartsAgainst(ChairBlueprint),
+    Table -> validatePartsAgainst(TableBlueprint))
   
   private def validatePartsAgainst(partTypes: Seq[PartType]): (Seq[Part] => Boolean) =
     parts => sortSeqOfClasses[Part](parts.map(_.getClass)).sameElements(partTypes)

@@ -31,11 +31,12 @@ class Master(partType: PartType, basePrice: BigDecimal, duration: FiniteDuration
 
   def receive = {
     case PartRequest(orderNo, requestedType) if partType.isAssignableFrom(requestedType) =>
-      log.debug(s"Master $logSelf received a Part request and is now working on it")
+      log.debug(s"Master $logSelf received a Part request for a ${requestedType.getSimpleName} and is now working on it")
       context.become(working, discardOld = false)
       val part = CreatePart(requestedType)()
       requesters += orderNo -> sender()
       context.system.scheduler.scheduleOnce(duration, self, (orderNo, part))
+
     case PartRequest(orderNo, alienType) =>
       log.info(s"Master $logSelf received a part request for a wrong type $alienType")
       sender() ! UnrecognizedPartType(orderNo, partType)
@@ -47,13 +48,19 @@ class Master(partType: PartType, basePrice: BigDecimal, duration: FiniteDuration
       producedAmount = producedAmount + 1
       if (producedAmount > 0 && producedAmount % 10 == 0)
         price = (price * 1.05).setScale(2, RoundingMode.HALF_UP)
-      requesters(orderNo) ! PartComplete(orderNo, price, part)
+      val finalPrice = part match {
+        case TableLeg(_) => price * 2
+        case _ => price
+      }
+      requesters(orderNo) ! PartComplete(orderNo, finalPrice, part)
+      log.debug(s"Master $logSelf finished ${PartComplete(orderNo, finalPrice, part)} and is sending it back to ${requesters(orderNo)}")
       requesters -= orderNo
+
     case unhandled =>
       log.info(s"Master $logSelf received unhandled message $unhandled.")
   }
 
-  private def logSelf = s"$self [works on $partType, created $producedAmount parts, current price $price]"
+  private def logSelf = s"$self [works on ${partType.getSimpleName}, created $producedAmount parts, current price $price]"
 
 }
 

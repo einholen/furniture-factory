@@ -11,24 +11,19 @@ class ManufacturerSpec extends TestKitWordSpec {
   val settings = Settings(ConfigFactory.load("test").withFallback(applicationConfig))
   import settings._
 
-  val maxManufacturingDurations = Map(
-    Chair -> (ChairBackManufacturingTime max ChairLegManufacturingTime max ChairSeatManufacturingTime),
-    Table -> (TableLegManufacturingTime max TableTopManufacturingTime)
-  )
-
   "The Factory (manufacturer actor)" should {
-    "produce chairs" in {
+    "produce chairs and it should take at least assembly time" in {
       val manufacturer = system.actorOf(Manufacturer.props(settings))
-      val maxDuration = (AssemblyDuration + maxManufacturingDurations(Chair)) * 1.5
       manufacturer ! Shop(Chair)
-      expectMsgPF(maxDuration) { case OrderComplete(Chair, _) => () }
+      expectNoMsg(ManufacturingTime + AssemblyDuration)
+      expectMsgPF() { case OrderComplete(Chair, _) => () }
     }
 
-    "produce tables" in {
+    "produce tables and it should take at least assembly time" in {
       val manufacturer = system.actorOf(Manufacturer.props(settings))
-      val maxDuration = (AssemblyDuration + maxManufacturingDurations(Table)) * 1.5
       manufacturer ! Shop(Table)
-      expectMsgPF(maxDuration) { case OrderComplete(Table, _) => () }
+      expectNoMsg(ManufacturingTime + AssemblyDuration)
+      expectMsgPF() { case OrderComplete(Table, _) => () }
     }
   }
 

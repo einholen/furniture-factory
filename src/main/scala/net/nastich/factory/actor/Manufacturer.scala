@@ -31,37 +31,78 @@ class Manufacturer(settings: Settings) extends Actor with ActorLogging with HasS
   var freeChairTopWorkers: List[ActorRef] = List.empty
   var freeTableTopWorkers: List[ActorRef] = List.empty
 
+  var orders: Map[Long, Item] = Map.empty
   var customers: Map[Long, ActorRef] = Map.empty
-  var partsForOrders: Map[Long, Seq[Part]] = Map.empty
+  var invoices: Map[Long, BigDecimal] = Map.empty.withDefaultValue(BigDecimal("0.00"))
+  
+  var collectedParts: Map[Long, Seq[Part]] = Map.empty.withDefaultValue(Seq.empty[Part])
 
   def receive = LoggingReceive(acceptOrders orElse acceptParts orElse acceptAssembledProducts)
 
   val acceptOrders: Receive = {
-    case Shop(Chair) =>
-      log.info("Ordered chair")
+    case Shop(item) =>
       val orderNo = nextSeq()
+      log.debug(s"An order #$orderNo for a $item arrived")
+      orders += orderNo -> item
       customers += orderNo -> sender()
-      self ! Assembled(orderNo, AssemblyPrice, Chair)
-
-    case Shop(Table) =>
-      log.info("Ordered table")
-      val orderNo = nextSeq()
-      customers += orderNo -> sender()
-      self ! Assembled(orderNo, AssemblyPrice * 2, Table)
+      item match {
+        case Chair =>
+          for (i <- 1 to 4) nextLegWorker() ! PartRequest(orderNo, classOf[ChairLeg])
+          nextChairWorker() ! PartRequest(orderNo, classOf[ChairSeat])
+          nextChairWorker() ! PartRequest(orderNo, classOf[ChairBack])
+          
+        case Table =>
+          for (_ <- 1 to 4) nextLegWorker() ! PartRequest(orderNo, classOf[TableLeg])
+          nextTableTopWorker() ! PartRequest(orderNo, classOf[TableTop])
+      }
   }
 
   val acceptParts: Receive = {
     case PartComplete(orderNo, price, part) =>
-      val alreadyCollectedParts = partsForOrders.getOrElse(orderNo, Seq.empty[Part])
-      partsForOrders += orderNo -> (part +: alreadyCollectedParts)
+      part match {
+        case _: Leg => freeLegWorkers ::= sender()
+        case _: ChairTop => freeChairTopWorkers ::= sender()
+        case _: TableTop => freeTableTopWorkers ::= sender()
+      }
+      val partsForOrder = part +: collectedParts(orderNo)
+      collectedParts += orderNo -> partsForOrder
+      invoices += orderNo -> (invoices(orderNo) + price)
+      val orderedItem = orders(orderNo)
+      val isComplete = PackageValidators(orderedItem)
+      if (isComplete(partsForOrder)) {
+        assembly ! Package(orderNo, orderedItem, partsForOrder)
+        collectedParts -= orderNo
+      }
   }
 
   val acceptAssembledProducts: Receive = {
     case Assembled(orderNo, price, product) =>
-      customers(orderNo) ! OrderComplete(product, price)
+      customers(orderNo) ! OrderComplete(product, invoices(orderNo) + price) //      invoices += orderNo -> (invoices(orderNo) + price)
       customers -= orderNo
+      orders -= orderNo
+      invoices -= orderNo
+  }
+  
+  private def nextLegWorker() = freeLegWorkers match {
+    case worker :: remaining =>
+      freeLegWorkers = remaining
+      worker
+    case Nil => context.actorOf(Master.props(classOf[Leg], PartBasePrice, ManufacturingTime))
   }
 
+  private def nextChairWorker() = freeChairTopWorkers match {
+    case worker :: remaining =>
+      freeChairTopWorkers = remaining
+      worker
+    case Nil => context.actorOf(Master.props(classOf[ChairTop], PartBasePrice, ManufacturingTime))
+  }
+
+  private def nextTableTopWorker() = freeTableTopWorkers match {
+    case worker :: remaining =>
+      freeTableTopWorkers = remaining
+      worker
+    case Nil => context.actorOf(Master.props(classOf[TableTop], PartBasePrice, ManufacturingTime))
+  }
 }
 
 object Manufacturer {
