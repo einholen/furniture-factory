@@ -30,13 +30,14 @@ class Master(partType: PartType, basePrice: BigDecimal, duration: FiniteDuration
   var requesters: Map[Long, ActorRef] = Map.empty
 
   def receive = {
-    case PartRequest(orderNo, requestedType) if requestedType == partType =>
+    case PartRequest(orderNo, requestedType) if partType.isAssignableFrom(requestedType) =>
       log.debug(s"Master $logSelf received a Part request and is now working on it")
       context.become(working, discardOld = false)
-      val part = CreatePart(partType)()
+      val part = CreatePart(requestedType)()
       requesters += orderNo -> sender()
       context.system.scheduler.scheduleOnce(duration, self, (orderNo, part))
     case PartRequest(orderNo, alienType) =>
+      log.info(s"Master $logSelf received a part request for a wrong type $alienType")
       sender() ! UnrecognizedPartType(orderNo, partType)
   }
 
@@ -83,8 +84,8 @@ object Master {
   /**
    * A Master responds with this message if he's requested to produce a Part he doesn
    *
-   * @param orderNo
-   * @param actualPartType
+   * @param orderNo order number
+   * @param actualPartType the part type the master is configured with
    */
   case class UnrecognizedPartType(orderNo: Long, actualPartType: PartType)
 

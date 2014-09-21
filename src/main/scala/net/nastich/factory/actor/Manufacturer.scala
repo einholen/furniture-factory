@@ -94,11 +94,13 @@ object Manufacturer {
   object Part {
     type PartType = Class[_ <: Part]
   }
-  case class TableLeg(id: String = UUID.randomUUID().toString) extends Part
+  sealed trait Leg extends Part
+  sealed trait ChairTop extends Part
+  case class TableLeg(id: String = UUID.randomUUID().toString) extends Leg
   case class TableTop(id: String = UUID.randomUUID().toString) extends Part
-  case class ChairLeg(id: String = UUID.randomUUID().toString) extends Part
-  case class ChairSeat(id: String = UUID.randomUUID().toString) extends Part
-  case class ChairBack(id: String = UUID.randomUUID().toString) extends Part
+  case class ChairLeg(id: String = UUID.randomUUID().toString) extends Leg
+  case class ChairSeat(id: String = UUID.randomUUID().toString) extends ChairTop
+  case class ChairBack(id: String = UUID.randomUUID().toString) extends ChairTop
 
   /**
    * This message is expected to be replied with to Shopping orders ([[net.nastich.factory.actor.Manufacturer.Shop]])
