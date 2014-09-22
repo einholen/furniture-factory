@@ -3,6 +3,7 @@ package net.nastich.factory
 import akka.actor._
 import akka.event.LoggingAdapter
 import akka.pattern.ask
+import akka.routing.{RoundRobinPool, RoundRobinGroup, RandomGroup}
 import akka.util.Timeout
 import net.nastich.factory.actor.Manufacturer._
 import net.nastich.factory.model._
@@ -65,7 +66,7 @@ trait OrderService extends HttpService {
               future
             }
             case unknown => complete {
-              StatusCodes.PreconditionFailed -> Map("message" -> s"Cannot handle item type: $unknown")
+              StatusCodes.NotFound -> Map("message" -> s"Cannot handle item type: $unknown")
             }
           }
         }
