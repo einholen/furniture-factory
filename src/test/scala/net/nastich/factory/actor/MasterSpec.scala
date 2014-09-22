@@ -9,7 +9,7 @@ import org.scalatest.Assertions
 import scala.concurrent.blocking
 import scala.concurrent.duration._
 
-class MasterSpec extends TestKitWordSpec with Assertions {
+class MasterSpec extends TestKitWordSpec("MasterSpec") with Assertions {
 
   val defaultPrice = BigDecimal(10)
 

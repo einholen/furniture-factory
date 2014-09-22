@@ -6,7 +6,7 @@ import net.nastich.factory.common.TestKitWordSpec
 
 import scala.concurrent.duration._
 
-class AssemblySpec extends TestKitWordSpec {
+class AssemblySpec extends TestKitWordSpec("AssemblySpec") {
 
   val price = BigDecimal(10.0)
 
@@ -20,11 +20,11 @@ class AssemblySpec extends TestKitWordSpec {
       val assembly = system.actorOf(Assembly.props(price, time))
 
       assembly ! Package(1L, Chair, testChairPackageComplete)
-      expectNoMsg(time)
+      expectNoMsg(time mul 9 div 10)
       expectMsg(Assembled(1L, price, Chair))
 
       assembly ! Package(1L, Table, testTablePackageComplete)
-      expectNoMsg(time)
+      expectNoMsg(time mul 9 div 10)
       expectMsg(Assembled(1L, price, Table))
     }
 
@@ -35,10 +35,10 @@ class AssemblySpec extends TestKitWordSpec {
       assembly ! Package(1L, Chair, testChairPackageComplete)
       assembly ! Package(2L, Chair, testChairPackageComplete)
 
-      expectNoMsg(time)
+      expectNoMsg(time mul 9 div 10)
       expectMsg(Assembled(1L, price, Chair))
 
-      expectNoMsg(time)
+      expectNoMsg(time mul 9 div 10)
       expectMsg(Assembled(2L, price, Chair))
     }
     

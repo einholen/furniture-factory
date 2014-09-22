@@ -4,7 +4,7 @@ version       := "0.1"
 
 scalaVersion  := "2.11.2"
 
-scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8")
+scalacOptions := Seq("-unchecked", "-deprecation", "-feature", "-language:existentials", "-encoding", "utf8")
 
 resolvers += "spray" at "http://repo.spray.io/"
 

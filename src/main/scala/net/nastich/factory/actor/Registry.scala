@@ -1,7 +1,7 @@
 package net.nastich.factory.actor
 
 import akka.actor.FSM.->
-import akka.actor.{ActorLogging, Actor}
+import akka.actor.{Cancellable, ActorLogging, Actor}
 import net.nastich.factory.actor.Registry.{RegisterSoldPart, PrintDiagnostic}
 import net.nastich.factory.model.Item
 import net.nastich.factory.model.Part.PartType
@@ -30,14 +30,20 @@ class Registry extends Actor with ActorLogging {
   var totalCost: BigDecimal = 0.0
 
   import context.dispatcher
-  context.system.scheduler.schedule(1.second, 20.seconds) {
-    self ! PrintDiagnostic
+  var printSchedule: Cancellable = _
+
+  override def preStart() = {
+    printSchedule = context.system.scheduler.schedule(1.second, 10.seconds) {
+      self ! PrintDiagnostic
+    }
   }
+  
+  override def postStop() = printSchedule.cancel()
 
   def receive = {
     case PrintDiagnostic =>
-      log.info(
-        s"""=== Furniture Factory stats:
+      log.info(s"""
+           |--- Furniture Factory stats:
            |  Orders taken: $amountOfOrders
            |  Finished orders: $finishedOrders
            |  Parts sold: $partsSold

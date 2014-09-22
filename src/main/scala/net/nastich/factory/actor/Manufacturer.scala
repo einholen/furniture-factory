@@ -20,13 +20,17 @@ import net.nastich.factory.util.HasSequence
  */
 class Manufacturer(settings: Settings) extends Actor with ActorLogging with HasSequence {
 
-  import net.nastich.factory.actor.Assembly._
-  import net.nastich.factory.actor.Manufacturer._
-  import net.nastich.factory.actor.Master._
+  log.debug(s"Created Manufacturer. Settings = $settings")
+
+  import Assembly._
+  import Manufacturer._
+  import Master._
+  import Registry._
   import settings._
 
   val assembly: ActorRef = context.actorOf(
     Assembly.props(AssemblyPrice, AssemblyDuration).withRouter(RoundRobinPool(AssemblyCapacity)), "assembly")
+  val registry: ActorRef = context.actorOf(if (RegistryEnabled) Props[Registry] else Props.empty, "accounting")
 
   var freeLegWorkers: List[ActorRef] = List.empty
   var freeChairTopWorkers: List[ActorRef] = List.empty
@@ -43,7 +47,7 @@ class Manufacturer(settings: Settings) extends Actor with ActorLogging with HasS
   val acceptOrders: Receive = {
     case Shop(item) =>
       val orderNo = nextSeq()
-      log.debug(s"An order #$orderNo for a $item arrived")
+      registry ! RegisterIncomingOrder
       orders += orderNo -> item
       customers += orderNo -> sender()
       item match {
@@ -60,6 +64,7 @@ class Manufacturer(settings: Settings) extends Actor with ActorLogging with HasS
 
   val acceptParts: Receive = {
     case PartComplete(orderNo, price, part) =>
+      registry ! RegisterSoldPart(part.getClass, price)
       part match {
         case _: Leg => freeLegWorkers ::= sender()
         case _: ChairTop => freeChairTopWorkers ::= sender()
@@ -78,6 +83,7 @@ class Manufacturer(settings: Settings) extends Actor with ActorLogging with HasS
 
   val acceptAssembledProducts: Receive = {
     case Assembled(orderNo, price, product) =>
+      registry ! RegisterAssembly(product, price)
       customers(orderNo) ! OrderComplete(product, invoices(orderNo) + price) // invoices += orderNo -> (invoices(orderNo) + price)
       customers -= orderNo
       orders -= orderNo

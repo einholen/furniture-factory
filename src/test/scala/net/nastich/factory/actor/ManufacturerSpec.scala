@@ -11,17 +11,12 @@ import org.scalatest.{OneInstancePerTest, Matchers, BeforeAndAfterAll, WordSpecL
 
 import scala.concurrent.duration._
 
-class ManufacturerSpec extends TestKit(ActorSystem("testSystem",
-        ConfigFactory.load("test").withFallback(ConfigFactory.load("application"))))
-    with WordSpecLike
-    with BeforeAndAfterAll
-    with Matchers
-    with ImplicitSender
-    with OneInstancePerTest {
+class ManufacturerSpec extends TestKitWordSpec("ManufacturerSpec",
+    ConfigFactory.load("test").withFallback(ConfigFactory.load("application"))) {
 
+  val log = system.log
   val settings = Settings(system.settings.config)
   import settings._
-  val log = system.log
 
   "The Factory (manufacturer actor)" should {
     "produce chairs and it should take at least assembly time" in {

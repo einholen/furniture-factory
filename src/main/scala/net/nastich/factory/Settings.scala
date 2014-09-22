@@ -13,7 +13,7 @@ import scala.concurrent.duration._
  * @author sena0713
  * @since 20.09.2014 
  */
-case class Settings(config: Config) {
+class Settings(config: Config) {
 
   import config._
 
@@ -32,7 +32,24 @@ case class Settings(config: Config) {
   /** Fixed cost of item assembly. */
   val AssemblyPrice = BigDecimal(getString(s"$assemblyPrefix.price"))
 
+  /** Indicates if a Registry is enabled and should be spawned within the Factory */
+  val RegistryEnabled = getString("net.nastich.factory.registry") match {
+    case "on" | "true" => true
+    case "off" | "false" => false
+  }
+
   private def getMillis(path: String): FiniteDuration = getDuration(path, MILLISECONDS).millis
   private def getPrice(path: String): BigDecimal = BigDecimal(getDouble(path)).setScale(2, RoundingMode.HALF_UP)
 
+  override def toString() = s"Settings(" +
+    s"ManufacturingTime=$ManufacturingTime, " +
+    s"PartBasePrice=$PartBasePrice, " +
+    s"AssemblyDuration=$AssemblyDuration, " +
+    s"AssemblyCapacity=$AssemblyCapacity, " +
+    s"AssemblyPrice=$AssemblyPrice," +
+    s"RegistryEnabled=$RegistryEnabled)"
+}
+
+object Settings {
+  def apply(config: Config): Settings = new Settings(config)
 }
