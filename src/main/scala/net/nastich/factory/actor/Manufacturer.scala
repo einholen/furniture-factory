@@ -6,6 +6,7 @@ import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.event.LoggingReceive
 import akka.routing.RoundRobinPool
 import net.nastich.factory.Settings
+import net.nastich.factory.model._
 import net.nastich.factory.util.HasSequence
 
 /**
@@ -37,7 +38,7 @@ class Manufacturer(settings: Settings) extends Actor with ActorLogging with HasS
   
   var collectedParts: Map[Long, Seq[Part]] = Map.empty.withDefaultValue(Seq.empty[Part])
 
-  def receive = LoggingReceive(acceptOrders orElse acceptParts orElse acceptAssembledProducts)
+  def receive = acceptOrders orElse acceptParts orElse acceptAssembledProducts
 
   val acceptOrders: Receive = {
     case Shop(item) =>
@@ -77,7 +78,7 @@ class Manufacturer(settings: Settings) extends Actor with ActorLogging with HasS
 
   val acceptAssembledProducts: Receive = {
     case Assembled(orderNo, price, product) =>
-      customers(orderNo) ! OrderComplete(product, invoices(orderNo) + price) //      invoices += orderNo -> (invoices(orderNo) + price)
+      customers(orderNo) ! OrderComplete(product, invoices(orderNo) + price) // invoices += orderNo -> (invoices(orderNo) + price)
       customers -= orderNo
       orders -= orderNo
       invoices -= orderNo
@@ -105,6 +106,7 @@ class Manufacturer(settings: Settings) extends Actor with ActorLogging with HasS
   }
 }
 
+/** Defines the messages of the contract of a [[net.nastich.factory.actor.Manufacturer]]. */
 object Manufacturer {
 
   /** @see [[net.nastich.factory.actor.Manufacturer]] */
@@ -112,36 +114,11 @@ object Manufacturer {
 
   /**
    * This message should be sent to the [[net.nastich.factory.actor.Manufacturer]] actor to order an item.
-   * To distinguish which kind of product is ordered, this message should wrap an
-   * [[net.nastich.factory.actor.Manufacturer.Item]].
+   * If everything is intact, the Factory will respond with an [[net.nastich.factory.actor.Manufacturer.OrderComplete]].
+   * 
+   * @param item ordered item
    */
   case class Shop(item: Item)
-
-  sealed abstract class Item(val text: String)
-  case object Chair extends Item("chair")
-  case object Table extends Item("table")
-
-  object Item {
-    def unapply(text: String): Option[Item] = text match {
-      case Chair.text => Some(Chair)
-      case Table.text => Some(Table)
-      case _ => None
-    }
-  }
-
-  sealed trait Part {
-    val id: String
-  }
-  object Part {
-    type PartType = Class[_ <: Part]
-  }
-  sealed trait Leg extends Part
-  sealed trait ChairTop extends Part
-  case class TableLeg(id: String = UUID.randomUUID().toString) extends Leg
-  case class TableTop(id: String = UUID.randomUUID().toString) extends Part
-  case class ChairLeg(id: String = UUID.randomUUID().toString) extends Leg
-  case class ChairSeat(id: String = UUID.randomUUID().toString) extends ChairTop
-  case class ChairBack(id: String = UUID.randomUUID().toString) extends ChairTop
 
   /**
    * This message is expected to be replied with to Shopping orders ([[net.nastich.factory.actor.Manufacturer.Shop]])

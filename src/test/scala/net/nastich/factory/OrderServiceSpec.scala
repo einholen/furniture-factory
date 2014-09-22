@@ -3,10 +3,11 @@ package net.nastich.factory
 import akka.actor.{Actor, Props}
 import akka.event.{LoggingAdapter, NoLogging}
 import net.nastich.factory.actor.Manufacturer._
+import net.nastich.factory.model._
 import org.scalatest.{Matchers, WordSpec}
 import spray.http.StatusCodes._
-import spray.testkit._
 import spray.httpx.SprayJsonSupport._
+import spray.testkit._
 
 class OrderServiceSpec extends WordSpec with OrderService with ScalatestRouteTest with Matchers {
 

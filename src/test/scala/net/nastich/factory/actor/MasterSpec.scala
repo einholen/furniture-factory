@@ -3,6 +3,7 @@ package net.nastich.factory.actor
 import net.nastich.factory.actor.Manufacturer._
 import net.nastich.factory.actor.Master._
 import net.nastich.factory.common.TestKitWordSpec
+import net.nastich.factory.model._
 import org.scalatest.Assertions
 
 import scala.concurrent.blocking

@@ -4,8 +4,8 @@ import akka.actor._
 import akka.event.LoggingAdapter
 import akka.pattern.ask
 import akka.util.Timeout
-import net.nastich.factory.actor.Manufacturer
-import net.nastich.factory.actor.Manufacturer.{Item, OrderComplete}
+import net.nastich.factory.actor.Manufacturer._
+import net.nastich.factory.model._
 import spray.http.MediaTypes._
 import spray.http.StatusCodes
 import spray.httpx.SprayJsonSupport._
@@ -15,6 +15,9 @@ import spray.routing._
 
 import scala.concurrent.duration._
 
+/**
+ * Defines the HTTP routing of the application.
+ */
 trait OrderService extends HttpService {
 
   def log: LoggingAdapter

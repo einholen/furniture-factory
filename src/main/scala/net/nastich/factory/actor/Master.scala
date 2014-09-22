@@ -1,20 +1,20 @@
 package net.nastich.factory.actor
 
 import akka.actor._
-import net.nastich.factory.actor.Manufacturer.Part.PartType
-import net.nastich.factory.actor.Manufacturer._
+import net.nastich.factory.model.Part.PartType
+import net.nastich.factory.model._
 
 import scala.concurrent.duration.FiniteDuration
 import scala.math.BigDecimal.RoundingMode
 
 /**
- * This actor represents an "outsourcing" master that crafts [[net.nastich.factory.actor.Manufacturer.Part]]s of a
+ * This actor represents an "outsourcing" master that crafts [[net.nastich.factory.model.Part]]s of a
  * specific type. The master has two modes:
  *
- * $  ''Standby'': In this mode the master accepts messages of type
- *    [[net.nastich.factory.actor.Master.PartRequest]] holding a part type that should be the same that it's
- *    configured for (using [[net.nastich.factory.actor.Master#props]]). As soon as a part is ready the master
- *    responds with a [[net.nastich.factory.actor.Master.PartComplete]] message.
+ * $  ''Standby'': In this mode the master accepts messages of type [[net.nastich.factory.actor.Master.PartRequest]]
+ *    holding a part type that should be the same that it's configured for (using
+ *    [[net.nastich.factory.actor.Master#props]]). Upon receiving the message the master transitions to ''Working''
+ *    state. As soon as a part is ready the master responds with a [[net.nastich.factory.actor.Master.PartComplete]].
  * $ ''Working'': In this mode the master is working hard on producing a part and does not accept any messages.
  *
  * @author sena0713
@@ -71,9 +71,9 @@ object Master {
     Props(new Master(partType, basePrice, duration))
 
   /**
-   * Send to the Master to request a [[net.nastich.factory.actor.Manufacturer.Part]] from him. Expected responses
-   * to this message are either [[net.nastich.factory.actor.Master.PartComplete]] or
-   * [[net.nastich.factory.actor.Master.UnrecognizedPartType]].
+   * Send to the Master to request a [[net.nastich.factory.model.Part]] from him. Expected responses to this message
+   * are either [[PartComplete]] or [[UnrecognizedPartType]].
+   *
    * @param orderNo order number to remember the requester while working
    * @param partType part type
    */

@@ -1,7 +1,7 @@
 package net.nastich.factory.actor
 
 import net.nastich.factory.actor.Assembly._
-import net.nastich.factory.actor.Manufacturer._
+import net.nastich.factory.model._
 import net.nastich.factory.common.TestKitWordSpec
 
 import scala.concurrent.duration._
