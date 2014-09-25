@@ -14,7 +14,9 @@ import scala.math.BigDecimal.RoundingMode
  * $  ''Standby'': In this mode the master accepts messages of type [[net.nastich.factory.actor.Master.PartRequest]]
  *    holding a part type that should be the same that it's configured for (using
  *    [[net.nastich.factory.actor.Master#props]]). Upon receiving the message the master transitions to ''Working''
- *    state. As soon as a part is ready the master responds with a [[net.nastich.factory.actor.Master.PartComplete]].
+ *    state. As soon as a part is ready the master responds with a [[net.nastich.factory.actor.Master.PartComplete]]
+ *    message which contains the produced part and the price to be paid. The price of a table leg is two times the 
+ *    default price and the base price is raised by 5% after every 10 produced parts.
  * $ ''Working'': In this mode the master is working hard on producing a part and does not accept any messages.
  *
  * @author sena0713
